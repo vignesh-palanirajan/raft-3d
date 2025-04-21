@@ -43,7 +43,7 @@
   The printer created by the old leader is still available.
 
 ## 🤝 Contributors
+- Vignesh Palanirajan – vignesh.palanirajan31@gmail.com
+- Vandana J – vandanaj0110@gmail.com
 - Trishita Umapathi – trishitaumapathi@gmail.com
 - Deepak Velmurugan – imdeepakv@gmail.com
-- Vandana J – vandanaj0110@gmail.com
-- Vignesh Palanirajan – vignesh.palanirajan31@gmail.com
