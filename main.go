@@ -1,46 +1,58 @@
 package main
 
 import (
+	"flag"
 	"log"
-	"net/http"
 	"os"
-	"fmt"
+	"path/filepath"
+	"time"
+	"raft3d/api"
+	"raft3d/raft"
+)
+
+var (
+	nodeID   = flag.String("id", "", "Node ID (required)")
+	joinAddr = flag.String("join", "", "Join address (optional)")
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("Usage: go run main.go <nodeID>")
+	flag.Parse()
+
+	if *nodeID == "" {
+		log.Fatal("Node ID must be specified with -id flag")
 	}
 
-	nodeID := os.Args[1]
-
-	var bindAddr, raftAddr, httpPort string
-
-	if nodeID == "node1" {
-		bindAddr = "127.0.0.1:5000"
-		raftAddr = "127.0.0.1:5000"
-		httpPort = "8080"
-	} else if nodeID == "node2" {
-		bindAddr = "127.0.0.1:5001"
-		raftAddr = "127.0.0.1:5001"
-		httpPort = "8081"
-	} else {
-		log.Fatalf("Unknown node ID: %s", nodeID)
+	// Clean data directory
+	dataDir := filepath.Join("data", *nodeID)
+	if err := os.RemoveAll(dataDir); err != nil && !os.IsNotExist(err) {
+		log.Printf("Warning: cleanup failed: %v", err)
 	}
+	time.Sleep(500 * time.Millisecond)
 
-	err := NewRaftNode(nodeID, bindAddr, raftAddr, httpPort)
+	config, err := raft.LoadConfig(*nodeID)
 	if err != nil {
-		log.Fatalf("Error starting Raft: %v", err)
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Follower joins the cluster
-	if nodeID != "node1" {
-		joinURL := fmt.Sprintf("http://127.0.0.1:8080/join?addr=%s&id=%s", raftAddr, nodeID)
-		resp, err := http.Get(joinURL)
-		if err != nil || resp.StatusCode != http.StatusOK {
+	node, err := raft.NewNode(*nodeID, config)
+	if err != nil {
+		log.Fatalf("Failed to create node: %v", err)
+	}
+
+	if *joinAddr != "" {
+		log.Printf("Joining cluster at %s", *joinAddr)
+		if err := node.JoinCluster(*joinAddr); err != nil {
 			log.Fatalf("Failed to join cluster: %v", err)
 		}
 	}
 
-	select {} // block forever
+	apiServer := api.NewAPIServer(node, config.HTTPAddr)
+	go func() {
+		log.Printf("Starting API server on %s", config.HTTPAddr)
+		if err := apiServer.Start(); err != nil {
+			log.Fatalf("API server failed: %v", err)
+		}
+	}()
+
+	select {} // Block forever
 }
