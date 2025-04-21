@@ -19,13 +19,13 @@
       -d '{"ID": "1", "printer_id": "1", "filament_id": "1", "filepath": "demo_model.stl", "print_weight_in_grams": 100, "status": "Queued"}'
 
 ### 4. View All Printers
-    curl http://localhost:8081/api/v1/printers
+    curl -X GET http://localhost:8081/api/v1/printers
 
 ### 5. View All Filaments
-    curl http://localhost:8081/api/v1/filaments
+    curl -X GET http://localhost:8081/api/v1/filaments
 
 ### 6. View All Print_Jobs
-    curl http://localhost:8081/api/v1/print_jobs
+    curl -X GET http://localhost:8081/api/v1/print_jobs
 
 ### 7. Update Status to Running
     curl -X POST http://localhost:8081/api/v1/print_jobs/1 \
